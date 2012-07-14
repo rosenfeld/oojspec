@@ -1,3 +1,5 @@
+require "rails-sandbox-assets"
+
 module Oojspec
   class OojspecFilter
     def self.filter(controller)
