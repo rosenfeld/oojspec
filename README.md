@@ -23,6 +23,10 @@ I'd rather prefer to write:
 assert(seats.length)
 ```
 
+[Here is how it looks like](http://oojspec.herokuapp.com/)
+(yeah, I know it is failing - it is on purpose so that you can see
+how the report looks like).
+
 # Is it production ready?
 
 It should be, but its API is certainly going to change a lot before it becomes stable.
