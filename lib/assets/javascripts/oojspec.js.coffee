@@ -10,7 +10,7 @@ window.oojspec = new class OojspecRunner
     @assertions.on 'pass',    => @stats.tests++; @stats.assertions++
     @assertions.on 'failure', => @stats.tests++; @stats.failures++
     #@runner.on 'context:start', => @stats.contexts++
-    @runner.on 'test:timeout', => @stats.timeouts++
+    @runner.on 'test:timeout', => @stats.timeouts++; @assertions.emit 'failure'
     @runner.on 'test:error', => @stats.errors++
     @runner.on 'test:deferred', => @stats.deferred++
 
