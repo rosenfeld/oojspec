@@ -27,7 +27,7 @@ window.oojspec = new class OojspecRunner
   autorun: -> @runSpecs() unless @disableAutorun
 
   runSpecs: ->
-    @reporter = buster.reporters.html.create()
+    @reporter = buster.reporters.html.create detectCssPath: false
     @reporter.listen @runner
     @runner.emit 'suite:start', name: "Specs"
     @runNextDescription()

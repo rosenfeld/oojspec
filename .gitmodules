@@ -1,6 +1,6 @@
 [submodule "external/busterjs/reports"]
 	path = external/busterjs/reports
-	url = git://github.com/rosenfeld/buster-test.git
+	url = git://github.com/busterjs/buster-test.git
 [submodule "external/busterjs/assertions"]
 	path = external/busterjs/assertions
 	url = git://github.com/busterjs/buster-assertions.git
