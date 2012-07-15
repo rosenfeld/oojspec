@@ -7,8 +7,8 @@ window.oojspec = new class OojspecRunner
     @assertions = buster.assertions
     (logFormatter = buster.create buster.format).quoteStrings = false
     @assertions.format = buster.bind logFormatter, "ascii"
-    @assertions.on 'pass', => @stats.assertions++
-    @assertions.on 'failure', => @stats.failures++
+    @assertions.on 'pass',    => @stats.tests++; @stats.assertions++
+    @assertions.on 'failure', => @stats.tests++; @stats.failures++
     #@runner.on 'context:start', => @stats.contexts++
     @runner.on 'test:timeout', => @stats.timeouts++
     @runner.on 'test:error', => @stats.errors++
