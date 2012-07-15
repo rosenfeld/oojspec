@@ -23,9 +23,23 @@ I'd rather prefer to write:
 assert(seats.length)
 ```
 
+# Examples
+
 [Here is how it looks like](http://oojspec.herokuapp.com/)
 (yeah, I know it is failing - it is on purpose so that you can see
 how the report looks like).
+
+Feel free to explore it in jsfiddle:
+
+- [JavaScript example with test runner](http://jsfiddle.net/rosenfeld/FWtaZ/)
+- [JavaScript example without test runner](http://jsfiddle.net/rosenfeld/W3BCJ/)
+- [CoffeeScript example with test runner](http://jsfiddle.net/rosenfeld/qJSyz/)
+- [CoffeeScript example without test runner](http://jsfiddle.net/rosenfeld/37Qdn/)
+
+And finally [a more complete suite](http://jsfiddle.net/rosenfeld/wgBJg/)
+demonstrating lots of the features available. This was extracted from the test
+application and is expected to fail. The result should be the same as the first
+example of this section, hosted on Heroku.
 
 # Is it production ready?
 
