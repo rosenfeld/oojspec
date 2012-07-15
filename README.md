@@ -35,7 +35,7 @@ On the other side, I'll be using it myself in my own projects, replacing my Jasm
 # Where are its tests?
 
 I'm still not sure on how to properly test it. For the time being, I'm writing some examples
-in a separate project. I'll publish its link here as soon as I polish it.
+in a [separate project](http://github.com/rosenfeld/oojspec-test).
 
 # Why not just using Buster.js (or Jasmine.js)?
 
