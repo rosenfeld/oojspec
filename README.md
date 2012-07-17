@@ -74,8 +74,8 @@ just like Mocha but it didn't give any guarantees about the order of execution o
 I needed that guarantee for some integration tests.
 
 But on the other side it is pretty modular and I would be able to take advantage of their
-assertions and expectations syntax as well as its reporter (although I'm still not happy with
-the default html reporter and I'll probably have to write a new one in the future).
+assertions and expectations syntax as well as its reporter (although I had to change it a bit so
+that it fit my taste).
 
 As Buster.js allowed me to focus on the runner itself I decided to begin this new project.
 
