@@ -36,6 +36,11 @@ Feel free to explore it in jsfiddle:
 - [CoffeeScript example with test runner](http://jsfiddle.net/rosenfeld/qJSyz/)
 - [CoffeeScript example without test runner](http://jsfiddle.net/rosenfeld/37Qdn/)
 
+Or some object-oriented approach:
+
+- [JavaScript OO approach](http://jsfiddle.net/rosenfeld/mkw3v/)
+- [CoffeeScript OO approach](http://jsfiddle.net/rosenfeld/ze8mU/)
+
 And finally [a more complete suite](http://jsfiddle.net/rosenfeld/wgBJg/)
 demonstrating lots of the features available. This was extracted from the test
 application and is expected to fail. The result should be the same as the first
@@ -169,8 +174,7 @@ The other approach is to compile the source (possibly in the
 [Try CoffeeScript page](http://coffeescript.org/)) and write your own custom runner HTML. Just take
 the template provided by this gem as an example on how to write it.
 
-I hope to have more free time to write more in-depth examples on how to do that in the Wiki
-in the future.
+Alternatively you can take a look at the jsfiddle demos from the Examples section.
 
 # Plans for the future
 
@@ -178,8 +182,6 @@ There are so many but I'm not sure how long it will take to implement all of the
 features in my spare time.
 
 I'd like to support `given-and-when-and-then-and` style specs at some point.
-
-Also, I'm still thinking about a more object-oriented API for the description blocks.
 
 But I wanted to have some initial working version published soon before someone register an
 `oojspec` gem before me! :)
