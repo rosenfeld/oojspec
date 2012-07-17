@@ -35,30 +35,46 @@ window.oojspec = new class OojspecRunner
   runNextDescription: =>
     (@runner.emit 'suite:end', @stats; return) unless @descriptions.length
     # TODO: think about non null contexts usage
-    @descriptions.shift().run @runner, @assertions, null, @runNextDescription
+    @descriptions.shift().run @runner, @assertions, null, false, @runNextDescription
 
   describe: (description, block)=>
     @stats.contexts++ # only root descriptions will be count
     @descriptions.push new Description(description, block)
 
+RESERVED_FOR_DESCRIPTION_DSL = ['beforeAll', 'before', 'after', 'afterAll', 'describe', 'context',
+                                'example', 'it', 'specify', 'pending', 'xit']
+RESERVED_FOR_EXAMPLE_DSL = ['assert', 'expect', 'fail', 'refute', 'waitsFor', 'runs']
 class Description
-  RESERVED = ['beforeAll', 'before', 'after', 'afterAll', 'describe', 'context',
-              'example', 'it', 'specify', 'pending', 'xit']
-  constructor: (@description, @block)->
+  RESERVED = RESERVED_FOR_DESCRIPTION_DSL.concat RESERVED_FOR_EXAMPLE_DSL
 
-  run: (@runner, @assertions, @context, @onFinish, @beforeBlocks = [], @afterBlocks = [])->
+  constructor: (@description, @block)->
+    if @description.runSpecs or @description.prototype?.runSpecs
+      @block = @description
+      @description = @block.description or @block.name
+
+  run: (@runner, @assertions, @binding, @bare, @onFinish, @beforeBlocks = [], @afterBlocks = [])->
     @runner.emit 'context:start', name: @description
     @dsl = new DescribeDsl
-    if c = @context
-      for reserved in RESERVED
-        try
-          throw new Error("'#{reserved}' method is reserved for oojspec usage only") if c[reserved]
-        catch e
-          e.name = "syntax error"
-          @runner.emit 'test:error', name: @description, error: e
-          @onDescriptionFinished(e)
-        c[reserved] = @dsl[reserved]
-    @runAround @beforeBlocks, @afterBlocks, @onDescriptionFinished, @processDescriptionBlock
+    if @block.runSpecs or @block.prototype?.runSpecs
+      @runWithContext()
+    else
+      @doRun()
+
+  doRun: -> @runAround @beforeBlocks, @afterBlocks, @onDescriptionFinished, @processDescriptionBlock
+
+  runWithContext: ->
+    try
+      @binding = if @block.prototype then new @block else @block
+      if @binding and not (@bare = @block.bare)
+        for reserved in RESERVED
+          if @binding[reserved]
+            throw new Error("'#{reserved}' method is reserved for oojspec usage only")
+          @binding[reserved] = @dsl[reserved]
+      @doRun()
+    catch e
+      e.name = "syntax error"
+      @runner.emit 'test:error', name: @description, error: e
+      @onDescriptionFinished(e)
 
   onDescriptionFinished: (error)=>
     if error and not error.handled
@@ -68,11 +84,14 @@ class Description
     @onFinish error
 
   runAround: (befores, afters, onFinish, block)->
-    new AroundBlock(befores, afters, block).run @runner, @assertions, @context, onFinish
+    new AroundBlock(befores, afters, block).run @runner, @assertions, @binding, @bare, onFinish
 
   processDescriptionBlock: (onFinish)=>
-    context = @context or @dsl
-    @block.call context, context
+    if @block.runSpecs or @block.prototype?.runSpecs
+      @binding.runSpecs @dsl
+    else
+      binding = @binding or @dsl
+      @block.call binding, @dsl
     @runAround @dsl._beforeAllBlocks_, @dsl._afterAllBlocks_, onFinish, (@onExamplesFinished)=>
       @runNextStep()
 
@@ -81,10 +100,11 @@ class Description
     nextStep = @dsl._examples_.shift()
     (@reportDeferred(nextStep.description); @runNextStep(); return) if nextStep.pending
     nextTick =
-      if nextStep instanceof Description then => nextStep
-        .run @runner, @assertions, @context, @runNextStep, @dsl._beforeBlocks_, @dsl._afterBlocks_
+      if nextStep instanceof Description then =>
+        nextStep.run @runner, @assertions, @binding, @bare, @runNextStep, \
+          @dsl._beforeBlocks_, @dsl._afterBlocks_
       else => # ExampleWithHooks
-        nextStep.run @runner, @assertions, @context, @onExampleFinished
+        nextStep.run @runner, @assertions, @binding, @bare, @onExampleFinished
     setTimeout nextTick, 0
 
   onExampleFinished: (error)=>
@@ -105,6 +125,7 @@ class DescribeDsl
       block.description = description
     else
       block = description
+    throw new Error("block missing") unless block
     container.push block
 
   constructor: ->
@@ -125,17 +146,18 @@ class DescribeDsl
   describe:  (description, block)=>
     @_examples_.push new Description(description, block, @_beforeBlocks_, @_afterBlocks_)
   example:   (description, block)=>
+    throw new Error("Examples must have a description and a block") unless description and block
     @_examples_.push new ExampleWithHooks(description, @_beforeBlocks_, @_afterBlocks_, block)
   pending:   (description)=> @_examples_.push {description, pending: true}
 
 class AroundBlock
   constructor: (@beforeBlocks, @afterBlocks, @block)->
 
-  run: (@runner, @assertions, @context, @onFinish)->
+  run: (@runner, @assertions, @binding, @bare, @onFinish)->
     @runGroup @beforeBlocks, ((e)=> @onBeforeError e), (wasSuccessful)=>
       if wasSuccessful
         @runMainBlock @block, (error)=>
-          @registerError error
+          @registerError error if error
           @runAfterGroup()
       else @runAfterGroup()
 
@@ -152,7 +174,7 @@ class AroundBlock
       onFinish error
 
   runGroup: (group, onError, onFinish)->
-    new ExampleGroupWithoutHooks(@assertions, @context, group, onFinish, onError).run()
+    new ExampleGroupWithoutHooks(@assertions, @binding, @bare, group, onFinish, onError).run()
 
   onBeforeError: (error)-> error.source = "before hook"; @registerError error
   onAfterError:  (error)-> error.source = "after hook";  @registerError error
@@ -161,7 +183,7 @@ class AroundBlock
 
 class ExampleWithHooks extends AroundBlock
   constructor: (@description, @beforeBlocks, @afterBlocks, @block)->
-  runMainBlock: (block, onFinish)-> new Example(block).run @assertions, @context, onFinish
+  runMainBlock: (block, onFinish)-> new Example(block).run @assertions, @binding, @bare, onFinish
   onAfterHooks: ->
     @handleResult()
     super
@@ -182,7 +204,7 @@ class ExampleWithHooks extends AroundBlock
     @runner.emit 'test:error', name: @description, error: @error
 
 class ExampleGroupWithoutHooks
-  constructor: (@assertions, @context, @blocks, @onFinish, @onError)-> @nextIndex = 0
+  constructor: (@assertions, @binding, @bare, @blocks, @onFinish, @onError)-> @nextIndex = 0
 
   run: ->
     @wasSuccessful = true
@@ -191,39 +213,40 @@ class ExampleGroupWithoutHooks
   nextTick: =>
     (@onFinish(@wasSuccessful); return) unless @nextIndex < @blocks.length
     block = @blocks[@nextIndex++]
-    new Example(block).run @assertions, @context, (error)=>
+    new Example(block).run @assertions, @binding, @bare, (error)=>
       (@wasSuccessful = false; @onError error) if error
       setTimeout @nextTick, 0
 
 class Example
   TICK = 10 # ms
-  constructor: (@exampleBlock)->
+  constructor: (@exampleBlock)-> @describeDsl = {}
 
-  run: (@assertions, @context, @onFinish)->
+  run: (@assertions, @binding, @bare, @onFinish)->
     @dsl = new ExampleDsl(@assertions.assert, @assertions.expect, @assertions.fail, \
                           @assertions.refute)
-    if @context
-      throw "runs and waitsFor are reserved attributes" if @context.runs or @context.waitsFor
-      @context.runs = @dsl.runs
-      @context.waitsFor = @dsl.waitsFor
+    if @binding and not @bare
+      for m in RESERVED_FOR_DESCRIPTION_DSL
+        @describeDsl[m] = b if b = @binding[m]
+        delete @binding[m]
+      (@binding[m] = b if b = @dsl[m]) for m in RESERVED_FOR_EXAMPLE_DSL
     @tryBlock @exampleBlock, ->
-      if @context
-        delete @context.runs
-        delete @context.waitsFor
-      (@onFinish(); return) unless (@steps = @dsl._asyncQueue_).length
+      if @binding and not @bare
+        delete @binding.runs
+        delete @binding.waitsFor
+      (@finish(); return) unless (@steps = @dsl._asyncQueue_).length
       @runNextAsyncStep()
 
   tryBlock: (block, onSuccess)->
     try
-      context = @context or @dsl
-      onSuccess.call this, block.call context, context
+      binding = @binding or @dsl
+      onSuccess.call this, block.call(binding, @dsl)
     catch error
       error = new Error(error) if typeof error is 'string'
-      error.message = "'#{error.message}' in '#{block.description}'" if block.description
-      @onFinish error
+      error.message = "'#{error.message}' in '#{block.description}'" if block?.description
+      @finish error
 
   runNextAsyncStep: ->
-    (@onFinish(); return) unless @steps.length
+    (@finish(); return) unless @steps.length
     step = @steps.shift()
     if step instanceof Function
       @tryBlock step, @runNextAsyncStep
@@ -237,8 +260,14 @@ class Example
   keepTryingCondition: =>
     @tryBlock @condition, (result)->
       (@runNextAsyncStep(); return) if result
-      (@onFinish {timeout: true, @description}; return) if new Date().getTime() > @deadline
+      (@finish {timeout: true, @description}; return) if new Date().getTime() > @deadline
       setTimeout @keepTryingCondition, TICK
+
+  finish: ->
+    if @binding and not @bare
+      (@binding[m] = b if b = @describeDsl[m]) for m in RESERVED_FOR_DESCRIPTION_DSL
+      delete @binding[m] for m in RESERVED_FOR_EXAMPLE_DSL
+    @onFinish.apply null, arguments
 
 class ExampleDsl
   constructor: (@assert, @expect, @fail, @refute)-> @_asyncQueue_ = []
