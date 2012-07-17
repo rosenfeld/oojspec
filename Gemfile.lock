@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    oojspec (0.0.3)
+    oojspec (0.0.4)
       coffee-rails
       rails-sandbox-assets
 
