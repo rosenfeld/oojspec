@@ -3,3 +3,19 @@
 .buster-test h1 .buster-logo {
   background-image: url(<%= asset_path "buster/logo.png" %>);
 }
+
+/* override margin to use 0.2em on top and bottom instead of 1em at bottom only. */
+.buster-test h1,
+.buster-test h2,
+.buster-test h3,
+.buster-test h4,
+.buster-test h5,
+.buster-test h6,
+.buster-test p {
+  margin: 0.2em 0;
+}
+
+/* was 0 0 1em 15px */
+.buster-test ul {
+    margin: 0.2em 0 0.2em 15px;
+}

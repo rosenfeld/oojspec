@@ -1,4 +1,5 @@
 # =require buster/all
+# =require_tree ./oojspec
 
 window.oojspec = new class OojspecRunner
   constructor: ->
