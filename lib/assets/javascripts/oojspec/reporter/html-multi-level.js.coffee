@@ -17,7 +17,8 @@ h.create = ->
   reporter
 
 h.contextStart = (context)->
-  container = @_lists[0] or @root
+  container = @root
+  @_list.appendChild container = el(@doc, "li") if @_list
   container.appendChild el(@doc, "h2", text: context.name)
   container.appendChild @_list = el(@doc, "ul")
   @_lists.unshift @_list
