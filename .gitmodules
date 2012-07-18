@@ -3,7 +3,7 @@
 	url = git://github.com/busterjs/buster-test.git
 [submodule "external/busterjs/assertions"]
 	path = external/busterjs/assertions
-	url = git://gitorious.org/buster/buster-assertions.git
+	url = git://github.com/busterjs/referee.git
 [submodule "external/busterjs/core"]
 	path = external/busterjs/core
 	url = git://github.com/busterjs/buster-core.git
