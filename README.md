@@ -156,7 +156,7 @@ By default this gem will expose `oojspec.describe` to the `window` object so tha
 directly from the top-level, but you can disable this exposition if you prefer:
 
 ```ruby
-config.sandbox_assets.options[:skipt_oojspec_expose] = true
+config.sandbox_assets.options[:skip_oojspec_expose] = true
 ```
 
 # What about non-Rails applications?
