@@ -23,6 +23,8 @@ I'd rather prefer to write:
 assert(seats.length)
 ```
 
+For a more in-depth introduction, please check-out [this article](http://rosenfeld.herokuapp.com/en/articles/programming/2012-07-20-client-side-code-testing-with-oojspec).
+
 # Examples
 
 [Here is how it looks like](http://oojspec.herokuapp.com/)
