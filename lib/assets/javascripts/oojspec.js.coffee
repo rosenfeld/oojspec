@@ -57,26 +57,22 @@ class Description
   run: (@runner, @assertions, @binding, @bare, @onFinish, @beforeBlocks = [], @afterBlocks = [])->
     @runner.emit 'context:start', name: @description
     @dsl = new DescribeDsl
-    if @block.runSpecs or @block.prototype?.runSpecs
-      @runWithContext()
-    else
-      @doRun()
+    @doRun() unless (@block.runSpecs or @block.prototype?.runSpecs) and @throwOnInvalidBinding()
 
   doRun: -> @runAround @beforeBlocks, @afterBlocks, @onDescriptionFinished, @processDescriptionBlock
 
-  runWithContext: ->
+  throwOnInvalidBinding: ->
     try
       @binding = if @block.prototype then new @block else @block
       if @binding and not (@bare = @block.bare)
-        for reserved in RESERVED
-          if @binding[reserved]
-            throw new Error("'#{reserved}' method is reserved for oojspec usage only")
-          @binding[reserved] = @dsl[reserved]
-      @doRun()
+        for reserved in RESERVED when @binding[reserved]
+          throw new Error("'#{reserved}' method is reserved for oojspec usage only")
     catch e
       e.name = "syntax error"
       @runner.emit 'test:error', name: @description, error: e
       @onDescriptionFinished(e)
+      return true
+    false
 
   onDescriptionFinished: (error)=>
     if error and not error.handled
@@ -89,13 +85,20 @@ class Description
     new AroundBlock(befores, afters, block).run @runner, @assertions, @binding, @bare, onFinish
 
   processDescriptionBlock: (onFinish)=>
+    @binding or= {}
+    @injectDsl() unless @bare
     if @block.runSpecs or @block.prototype?.runSpecs
       @binding.runSpecs @dsl
     else
-      binding = @binding or @dsl
-      @block.call binding, @dsl
+      @block.call @binding, @dsl
+    @removeDsl() unless @bare
+    @bare or= @binding.bare
     @runAround @dsl._beforeAllBlocks_, @dsl._afterAllBlocks_, onFinish, (@onExamplesFinished)=>
       @runNextStep()
+
+  injectDsl: -> @binding[p] = v for p, v of @dsl; return
+
+  removeDsl: -> delete @binding[p] for p in RESERVED_FOR_DESCRIPTION_DSL; return
 
   runNextStep: =>
     (@onExamplesFinished(); return) unless @dsl._examples_.length
