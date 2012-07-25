@@ -3,6 +3,7 @@
 
 window.oojspec = new class OojspecRunner
   constructor: ->
+    @timeout = 1000 # 1s - default timeout
     @runner = buster.create buster.eventEmitter
     @descriptions = []
     @assertions = buster.assertions
@@ -254,7 +255,7 @@ class Example
     else
       @waitsFor step...
 
-  waitsFor: (@condition, timeout=1000, @description)->
+  waitsFor: (@condition, timeout = @binding?.timeout or oojspec.timeout, @description)->
     @deadline = timeout + new Date().getTime()
     @keepTryingCondition()
 
