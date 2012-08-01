@@ -20,7 +20,9 @@ new class ProgressStats
     to.appendChild div
     div
 
-  addSuccess: (text)-> @addAssertElement text
+  addSuccess: (text)->
+    el = @addAssertElement text
+    el.className = 'deferred' if text is 'd '
 
   addError: (text)-> e = @addAssertElement text; e.className = @progress.className = 'fail'
 

@@ -19,3 +19,7 @@
 #progress > span.fail {
   color: red;
 }
+
+#progress > span.deferred {
+  color: yellow;
+}
