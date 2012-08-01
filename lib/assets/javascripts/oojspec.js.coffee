@@ -1,4 +1,6 @@
 # =require buster/all
+# =require_self
+# =require ./progress
 
 window.oojspec = new class OojspecRunner
   constructor: ->
@@ -8,12 +10,13 @@ window.oojspec = new class OojspecRunner
     @assertions = buster.assertions
     (logFormatter = buster.create buster.format).quoteStrings = false
     @assertions.format = buster.bind logFormatter, "ascii"
-    @assertions.on 'pass',    => @stats.tests++; @stats.assertions++
-    @assertions.on 'failure', => @stats.tests++; @stats.failures++
+    @assertions.on 'pass',    => @stats.assertions++
+    @assertions.on 'failure', => @stats.failures++
     #@runner.on 'context:start', => @stats.contexts++
-    @runner.on 'test:timeout', => @stats.timeouts++; @assertions.emit 'failure'
-    @runner.on 'test:error', => @stats.errors++
+    @runner.on 'test:timeout',  => @stats.timeouts++; @assertions.emit 'failure'
+    @runner.on 'test:error',    => @stats.errors++
     @runner.on 'test:deferred', => @stats.deferred++
+    @runner.on 'oojspec:examples:add', (count)=> @stats.tests += count
 
     @stats =
       contexts: 0
@@ -90,6 +93,7 @@ class Description
       @binding.runSpecs @dsl
     else
       @block.call @binding, @dsl
+    @runner.emit 'oojspec:examples:add', @dsl._examplesCount_
     @removeDsl() unless @bare
     @bare or= @binding.bare
     @runAround @dsl._beforeAllBlocks_, @dsl._afterAllBlocks_, onFinish, (@onExamplesFinished)=>
@@ -138,6 +142,7 @@ class DescribeDsl
     @_afterBlocks_ = []
     @_afterAllBlocks_ = []
     @_examples_ = []
+    @_examplesCount_ = 0 # only examples, not describes
     # aliases:
     @it = @specify = @example
     @context = @describe
@@ -151,8 +156,11 @@ class DescribeDsl
     @_examples_.push new Description(description, block, @_beforeBlocks_, @_afterBlocks_)
   example:   (description, block)=>
     throw new Error("Examples must have a description and a block") unless description and block
+    @_examplesCount_++
     @_examples_.push new ExampleWithHooks(description, @_beforeBlocks_, @_afterBlocks_, block)
-  pending:   (description)=> @_examples_.push {description, pending: true}
+  pending:   (description)=>
+    @_examplesCount_++
+    @_examples_.push {description, pending: true}
 
 class AroundBlock
   constructor: (@beforeBlocks, @afterBlocks, @block)->

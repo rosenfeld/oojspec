@@ -1,0 +1,21 @@
+/* Progress bar */
+#progress-bar {
+  background-color: yellow;
+  padding: 0;
+}
+
+#progress {
+  color: darkgreen;
+  font-weight: bold;
+  background-color: lightgreen;
+  position: relative;
+  width: 0;
+}
+
+#progress.fail {
+  background-color: lightpink;
+}
+
+#progress > span.fail {
+  color: red;
+}
