@@ -33,13 +33,13 @@ window.oojspec = new class OojspecRunner
   runSpecs: ->
     @reporter = buster.reporters.html.create detectCssPath: false
     @reporter.listen @runner
+    d.processDsl @runner for d in @descriptions
     @runner.emit 'suite:start', name: "Specs"
     @runNextDescription()
 
   runNextDescription: =>
     (@runner.emit 'suite:end', @stats; return) unless @descriptions.length
-    # TODO: think about non null contexts usage
-    @descriptions.shift().run @runner, @assertions, null, false, @runNextDescription
+    @descriptions.shift().run @assertions, @runNextDescription
 
   describe: (description, block)=>
     @stats.contexts++ # only root descriptions will be count
@@ -56,14 +56,23 @@ class Description
       @block = @description
       @description = @block.description or @block.name
 
-  run: (@runner, @assertions, @binding, @bare, @onFinish, @beforeBlocks = [], @afterBlocks = [])->
-    @runner.emit 'context:start', name: @description
+  processDsl: (@runner, @binding, @bare)->
     @dsl = new DescribeDsl
-    @doRun() unless (@block.runSpecs or @block.prototype?.runSpecs) and @throwOnInvalidBinding()
+    (@block.runSpecs or @block.prototype?.runSpecs) and @detectBindingError()
 
-  doRun: -> @runAround @beforeBlocks, @afterBlocks, @onDescriptionFinished, @processDescriptionBlock
+    @binding or= {}
+    @injectDsl() unless @bare
+    if @block.runSpecs or @block.prototype?.runSpecs
+      @binding.runSpecs @dsl
+    else
+      @block.call @binding, @dsl
+    @runner.emit 'oojspec:examples:add', @dsl._examplesCount_
+    @removeDsl() unless @bare
+    @bare or= @binding.bare
 
-  throwOnInvalidBinding: ->
+    d.processDsl @runner, @binding, @bare for d in @dsl._examples_ when d instanceof Description
+
+  detectBindingError: ->
     try
       @binding = if @block.prototype then new @block else @block
       if @binding and not (@bare = @block.bare)
@@ -71,10 +80,21 @@ class Description
           throw new Error("'#{reserved}' method is reserved for oojspec usage only")
     catch e
       e.name = "syntax error"
-      @runner.emit 'test:error', name: @description, error: e
-      @onDescriptionFinished(e)
-      return true
-    false
+      @bindingError = e
+
+  injectDsl: -> @binding[p] = v for p, v of @dsl; return
+
+  removeDsl: -> delete @binding[p] for p in RESERVED_FOR_DESCRIPTION_DSL; return
+
+  run: (@assertions, @onFinish, @beforeBlocks = [], @afterBlocks = [])->
+    @runner.emit 'context:start', name: @description
+    if @bindingError
+      @runner.emit 'test:error', name: @description, error: @bindingError
+      @onDescriptionFinished @bindingError
+    else
+      @doRun()
+
+  doRun: -> @runAround @beforeBlocks, @afterBlocks, @onDescriptionFinished, @processDescriptionBlock
 
   onDescriptionFinished: (error)=>
     if error and not error.handled
@@ -87,21 +107,8 @@ class Description
     new AroundBlock(befores, afters, block).run @runner, @assertions, @binding, @bare, onFinish
 
   processDescriptionBlock: (onFinish)=>
-    @binding or= {}
-    @injectDsl() unless @bare
-    if @block.runSpecs or @block.prototype?.runSpecs
-      @binding.runSpecs @dsl
-    else
-      @block.call @binding, @dsl
-    @runner.emit 'oojspec:examples:add', @dsl._examplesCount_
-    @removeDsl() unless @bare
-    @bare or= @binding.bare
     @runAround @dsl._beforeAllBlocks_, @dsl._afterAllBlocks_, onFinish, (@onExamplesFinished)=>
       @runNextStep()
-
-  injectDsl: -> @binding[p] = v for p, v of @dsl; return
-
-  removeDsl: -> delete @binding[p] for p in RESERVED_FOR_DESCRIPTION_DSL; return
 
   runNextStep: =>
     (@onExamplesFinished(); return) unless @dsl._examples_.length
@@ -109,8 +116,7 @@ class Description
     (@reportDeferred(nextStep.description); @runNextStep(); return) if nextStep.pending
     nextTick =
       if nextStep instanceof Description then =>
-        nextStep.run @runner, @assertions, @binding, @bare, @runNextStep, \
-          @dsl._beforeBlocks_, @dsl._afterBlocks_
+        nextStep.run @assertions, @runNextStep, @dsl._beforeBlocks_, @dsl._afterBlocks_
       else => # ExampleWithHooks
         nextStep.run @runner, @assertions, @binding, @bare, @onExampleFinished
     setTimeout nextTick, 0
