@@ -1,4 +1,5 @@
 # =require buster/all
+# =require ./utils
 
 _ = oojspec._
 
