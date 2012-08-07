@@ -1,3 +1,5 @@
+# =require ./runner
+
 new class ProgressStats
   constructor: (@eh = oojspec.runner)->
     @total = @count = 0
