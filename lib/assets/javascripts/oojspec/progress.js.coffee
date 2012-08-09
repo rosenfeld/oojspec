@@ -1,7 +1,7 @@
 # =require ./runner
 
 new class ProgressStats
-  constructor: (@eh = oojspec.runner)->
+  constructor: (@eh = oojspec.events)->
     @total = @count = 0
     @eh.on 'suite:start', @createElements
     @eh.on 'oojspec:examples:add', (count)=> @total += count

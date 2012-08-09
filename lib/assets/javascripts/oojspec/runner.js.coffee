@@ -6,7 +6,7 @@ _ = oojspec._
 _.extend oojspec, new class OojspecRunner
   constructor: ->
     @timeout = 1000 # 1s - default timeout
-    @runner = buster.create buster.eventEmitter
+    @events = buster.create buster.eventEmitter
     @descriptions = []
     @_registerEventHandlers()
     @_initializeStats()
@@ -18,11 +18,11 @@ _.extend oojspec, new class OojspecRunner
     @assertions.format = buster.bind logFormatter, "ascii"
     @assertions.on 'pass',    => @stats.assertions++
     @assertions.on 'failure', => @stats.failures++
-    #@runner.on 'context:start', => @stats.contexts++
-    @runner.on 'test:timeout',  => @stats.timeouts++; @assertions.emit 'failure'
-    @runner.on 'test:error',    => @stats.errors++
-    @runner.on 'test:deferred', => @stats.deferred++
-    @runner.on 'oojspec:examples:add', (count)=> @stats.tests += count
+    #@events.on 'context:start', => @stats.contexts++
+    @events.on 'test:timeout',  => @stats.timeouts++; @assertions.emit 'failure'
+    @events.on 'test:error',    => @stats.errors++
+    @events.on 'test:deferred', => @stats.deferred++
+    @events.on 'oojspec:examples:add', (count)=> @stats.tests += count
 
   _initializeStats: ->
     @stats =
@@ -39,13 +39,13 @@ _.extend oojspec, new class OojspecRunner
 
   runSpecs: =>
     @reporter = buster.reporters.html.create detectCssPath: false
-    @reporter.listen @runner
-    d.processDsl @runner for d in @descriptions
-    @runner.emit 'suite:start', name: "Specs"
+    @reporter.listen @events
+    d.processDsl @events for d in @descriptions
+    @events.emit 'suite:start', name: "Specs"
     @_runNextDescription()
 
   _runNextDescription: =>
-    (@runner.emit 'suite:end', @stats; return) unless @descriptions.length
+    (@events.emit 'suite:end', @stats; return) unless @descriptions.length
     @descriptions.shift().run @assertions, @_runNextDescription
 
   describe: (description, block)=>
@@ -63,7 +63,7 @@ class Description
       @block = @description
       @description = @block.description or @block.name
 
-  processDsl: (@runner, @binding, @bare)->
+  processDsl: (@events, @binding, @bare)->
     @dsl = new DescribeDsl
     (@block.runSpecs or @block.prototype?.runSpecs) and @detectBindingError()
 
@@ -73,11 +73,11 @@ class Description
       @binding.runSpecs @dsl
     else
       @block.call @binding, @dsl
-    @runner.emit 'oojspec:examples:add', @dsl._examplesCount_
+    @events.emit 'oojspec:examples:add', @dsl._examplesCount_
     @removeDsl() unless @bare
     @bare or= @binding.bare
 
-    d.processDsl @runner, @binding, @bare for d in @dsl._examples_ when d instanceof Description
+    d.processDsl @events, @binding, @bare for d in @dsl._examples_ when d instanceof Description
 
   detectBindingError: ->
     try
@@ -94,9 +94,9 @@ class Description
   removeDsl: -> delete @binding[p] for p in RESERVED_FOR_DESCRIPTION_DSL; return
 
   run: (@assertions, @onFinish, @beforeBlocks = [], @afterBlocks = [])->
-    @runner.emit 'context:start', name: @description
+    @events.emit 'context:start', name: @description
     if @bindingError
-      @runner.emit 'test:error', name: @description, error: @bindingError
+      @events.emit 'test:error', name: @description, error: @bindingError
       @onDescriptionFinished @bindingError
     else
       @doRun()
@@ -106,12 +106,12 @@ class Description
   onDescriptionFinished: (error)=>
     if error and not error.handled
       error.handled = true
-      @runner.emit 'test:error', { name: 'Error running describe statements', error }
-    @runner.emit 'context:end'
+      @events.emit 'test:error', { name: 'Error running describe statements', error }
+    @events.emit 'context:end'
     @onFinish error
 
   runAround: (befores, afters, onFinish, block)->
-    new AroundBlock(befores, afters, block).run @runner, @assertions, @binding, @bare, onFinish
+    new AroundBlock(befores, afters, block).run @events, @assertions, @binding, @bare, onFinish
 
   processDescriptionBlock: (onFinish)=>
     @runAround @dsl._beforeAllBlocks_, @dsl._afterAllBlocks_, onFinish, (@onExamplesFinished)=>
@@ -125,7 +125,7 @@ class Description
       if nextStep instanceof Description then =>
         nextStep.run @assertions, @runNextStep, @dsl._beforeBlocks_, @dsl._afterBlocks_
       else => # ExampleWithHooks
-        nextStep.run @runner, @assertions, @binding, @bare, @onExampleFinished
+        nextStep.run @events, @assertions, @binding, @bare, @onExampleFinished
     setTimeout nextTick, 0
 
   onExampleFinished: (error)=>
@@ -134,10 +134,10 @@ class Description
     console.log error
     name = @description
     name += " in #{error.source}" if error.source
-    @runner.emit 'test:error', { name, error }
+    @events.emit 'test:error', { name, error }
     @onFinish(error)
 
-  reportDeferred: (description)-> @runner.emit 'test:deferred', name: description
+  reportDeferred: (description)-> @events.emit 'test:deferred', name: description
 
 class DescribeDsl
   addHook = (description, block, container)->
@@ -178,7 +178,7 @@ class DescribeDsl
 class AroundBlock
   constructor: (@beforeBlocks, @afterBlocks, @block)->
 
-  run: (@runner, @assertions, @binding, @bare, @onFinish)->
+  run: (@events, @assertions, @binding, @bare, @onFinish)->
     @runGroup @beforeBlocks, ((e)=> @onBeforeError e), (wasSuccessful)=>
       if wasSuccessful
         @runMainBlock @block, (error)=>
@@ -187,7 +187,7 @@ class AroundBlock
       else @runAfterGroup()
 
   registerError: (error)->
-    @runner.emit 'oojspec:log:error', error
+    @events.emit 'oojspec:log:error', error
     @error or= error
 
   runMainBlock: (block, onFinish)->
@@ -214,19 +214,19 @@ class ExampleWithHooks extends AroundBlock
     super
 
   handleResult: ->
-    (@runner.emit 'test:success', name: @description; return) unless @error
+    (@events.emit 'test:success', name: @description; return) unless @error
     @error.handled = true
     if @error.name is 'AssertionError'
-      @runner.emit 'test:failure', name: @description, error: @error
+      @events.emit 'test:failure', name: @description, error: @error
       return
 
     if @error.timeout
       @error.source or= 'example'
-      @runner.emit 'test:timeout', name: @description, error: @error
+      @events.emit 'test:timeout', name: @description, error: @error
       return
     @error.name = 'Exception'
     @error.name += " in #{@error.source}" if @error.source
-    @runner.emit 'test:error', name: @description, error: @error
+    @events.emit 'test:error', name: @description, error: @error
 
 class ExampleGroupWithoutHooks
   constructor: (@assertions, @binding, @bare, @blocks, @onFinish, @onError)-> @nextIndex = 0
