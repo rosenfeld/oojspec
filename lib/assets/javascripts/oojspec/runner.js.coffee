@@ -11,6 +11,9 @@ _.extend oojspec, new class OojspecRunner
     @_registerEventHandlers()
     @_initializeStats()
     @params = _.parseParams()
+    # avoid too much parameters between methods, acts like a context:
+    @params.events = @events
+    @params.assertions = @assertions
 
   _registerEventHandlers: ->
     @assertions = buster.assertions
@@ -40,13 +43,13 @@ _.extend oojspec, new class OojspecRunner
   runSpecs: =>
     @reporter = buster.reporters.html.create detectCssPath: false
     @reporter.listen @events
-    d.processDsl @events for d in @descriptions
+    d.processDsl @params for d in @descriptions
     @events.emit 'suite:start', name: "Specs"
     @_runNextDescription()
 
   _runNextDescription: =>
     (@events.emit 'suite:end', @stats; return) unless @descriptions.length
-    @descriptions.shift().run @assertions, @_runNextDescription
+    @descriptions.shift().run @params, @_runNextDescription
 
   describe: (description, block)=>
     @stats.contexts++ # only root descriptions will be count
@@ -63,7 +66,8 @@ class Description
       @block = @description
       @description = @block.description or @block.name
 
-  processDsl: (@events, @binding, @bare)->
+  processDsl: (@params, @binding, @bare)->
+    @events = params.events
     @dsl = new DescribeDsl
     (@block.runSpecs or @block.prototype?.runSpecs) and @detectBindingError()
 
@@ -77,7 +81,7 @@ class Description
     @removeDsl() unless @bare
     @bare or= @binding.bare
 
-    d.processDsl @events, @binding, @bare for d in @dsl._examples_ when d instanceof Description
+    d.processDsl @params, @binding, @bare for d in @dsl._examples_ when d instanceof Description
 
   detectBindingError: ->
     try
@@ -93,7 +97,7 @@ class Description
 
   removeDsl: -> delete @binding[p] for p in RESERVED_FOR_DESCRIPTION_DSL; return
 
-  run: (@assertions, @onFinish, @beforeBlocks = [], @afterBlocks = [])->
+  run: (@params, @onFinish, @beforeBlocks = [], @afterBlocks = [])->
     @events.emit 'context:start', name: @description
     if @bindingError
       @events.emit 'test:error', name: @description, error: @bindingError
@@ -111,7 +115,7 @@ class Description
     @onFinish error
 
   runAround: (befores, afters, onFinish, block)->
-    new AroundBlock(befores, afters, block).run @events, @assertions, @binding, @bare, onFinish
+    new AroundBlock(befores, afters, block).run @params, @binding, @bare, onFinish
 
   processDescriptionBlock: (onFinish)=>
     @runAround @dsl._beforeAllBlocks_, @dsl._afterAllBlocks_, onFinish, (@onExamplesFinished)=>
@@ -123,9 +127,9 @@ class Description
     (@reportDeferred(nextStep.description); @runNextStep(); return) if nextStep.pending
     nextTick =
       if nextStep instanceof Description then =>
-        nextStep.run @assertions, @runNextStep, @dsl._beforeBlocks_, @dsl._afterBlocks_
+        nextStep.run @params, @runNextStep, @dsl._beforeBlocks_, @dsl._afterBlocks_
       else => # ExampleWithHooks
-        nextStep.run @events, @assertions, @binding, @bare, @onExampleFinished
+        nextStep.run @params, @binding, @bare, @onExampleFinished
     setTimeout nextTick, 0
 
   onExampleFinished: (error)=>
@@ -178,7 +182,8 @@ class DescribeDsl
 class AroundBlock
   constructor: (@beforeBlocks, @afterBlocks, @block)->
 
-  run: (@events, @assertions, @binding, @bare, @onFinish)->
+  run: (@params, @binding, @bare, @onFinish)->
+    @events = @params.events
     @runGroup @beforeBlocks, ((e)=> @onBeforeError e), (wasSuccessful)=>
       if wasSuccessful
         @runMainBlock @block, (error)=>
@@ -199,7 +204,7 @@ class AroundBlock
       onFinish error
 
   runGroup: (group, onError, onFinish)->
-    new ExampleGroupWithoutHooks(@assertions, @binding, @bare, group, onFinish, onError).run()
+    new ExampleGroupWithoutHooks(@params, @binding, @bare, group, onFinish, onError).run()
 
   onBeforeError: (error)-> error.source = "before hook"; @registerError error
   onAfterError:  (error)-> error.source = "after hook";  @registerError error
@@ -208,7 +213,7 @@ class AroundBlock
 
 class ExampleWithHooks extends AroundBlock
   constructor: (@description, @beforeBlocks, @afterBlocks, @block)->
-  runMainBlock: (block, onFinish)-> new Example(block).run @assertions, @binding, @bare, onFinish
+  runMainBlock: (block, onFinish)-> new Example(block).run @params, @binding, @bare, onFinish
   onAfterHooks: ->
     @handleResult()
     super
@@ -229,7 +234,8 @@ class ExampleWithHooks extends AroundBlock
     @events.emit 'test:error', name: @description, error: @error
 
 class ExampleGroupWithoutHooks
-  constructor: (@assertions, @binding, @bare, @blocks, @onFinish, @onError)-> @nextIndex = 0
+  constructor: (@params, @binding, @bare, @blocks, @onFinish, @onError)->
+    @nextIndex = 0
 
   run: ->
     @wasSuccessful = true
@@ -238,7 +244,7 @@ class ExampleGroupWithoutHooks
   nextTick: =>
     (@onFinish(@wasSuccessful); return) unless @nextIndex < @blocks.length
     block = @blocks[@nextIndex++]
-    new Example(block).run @assertions, @binding, @bare, (error)=>
+    new Example(block).run @params, @binding, @bare, (error)=>
       (@wasSuccessful = false; @onError error) if error
       setTimeout @nextTick, 0
 
@@ -246,9 +252,9 @@ class Example
   TICK = 10 # ms
   constructor: (@exampleBlock)-> @describeDsl = {}
 
-  run: (@assertions, @binding, @bare, @onFinish)->
-    @dsl = new ExampleDsl(@assertions.assert, @assertions.expect, @assertions.fail, \
-                          @assertions.refute)
+  run: (@params, @binding, @bare, @onFinish)->
+    a = @params.assertions
+    @dsl = new ExampleDsl(a.assert, a.expect, a.fail, a.refute)
     if @binding and not @bare
       for m in RESERVED_FOR_DESCRIPTION_DSL
         @describeDsl[m] = b if b = @binding[m]
