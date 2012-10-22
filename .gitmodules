@@ -9,4 +9,4 @@
 	url = git://github.com/busterjs/buster-core.git
 [submodule "external/busterjs/format"]
 	path = external/busterjs/format
-	url = git://github.com/busterjs/buster-format.git
+	url = git://github.com/busterjs/formatio.git
