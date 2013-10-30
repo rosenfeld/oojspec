@@ -194,3 +194,7 @@ I'd love to hear your opinions on the API and design of `oojspec` and of course 
 will be very welcome if they're aligned with this project goals.
 
 Enjoy! :)
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/rosenfeld/oojspec/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
