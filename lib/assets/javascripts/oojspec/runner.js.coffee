@@ -279,7 +279,7 @@ class Example
   runNextAsyncStep: ->
     (@finish(); return) unless @steps.length
     step = @steps.shift()
-    if step instanceof Function
+    if typeof step is 'function'
       @tryBlock step, @runNextAsyncStep
     else
       @waitsFor step...
