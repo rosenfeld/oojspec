@@ -14,6 +14,14 @@ _.extend oojspec, new class OojspecRunner
     # avoid too much parameters between methods, acts like a context:
     @params.events = @events
     @params.assertions = @assertions
+    @_initializeIFrameSupport()
+
+  _initializeIFrameSupport: ->
+    @_iframesLoadedCount = 0
+    @_iframeByWindow = {}
+    @_iframeWindows = []
+    @on 'iframe-start', (w)=> @_iframeByWindow[w].style.display = ''
+    @on 'iframe-end', (w)=> @_iframeByWindow[w].style.display = 'none'
 
   _registerEventHandlers: ->
     @assertions = buster.assertions
@@ -40,10 +48,24 @@ _.extend oojspec, new class OojspecRunner
   exposeAll: => window.describe = @describe
   autorun: => @runSpecs() unless @disableAutorun
 
+  # for tests in iframe support:
+  onIFrameLoaded: (iframe)=>
+    @_iframeByWindow[iframe.contentWindow] = iframe
+    @_iframeWindows.push(iframe.contentWindow)
+    if ++@_iframesLoadedCount is document.getElementsByTagName('iframe').length
+      w.oojspec.run() for w in @_iframeWindows
+      @autorun()
+
+  notify: (eventName, options)->
+    @descriptions.push new Notification(@events, eventName, options)
+
+  on: (eventName, eventHandler)->
+    @events.on "notification:#{eventName}", eventHandler
+
   runSpecs: =>
     @reporter = buster.reporters.html.create detectCssPath: false
     @reporter.listen @events
-    d.processDsl @params for d in @descriptions
+    d.processDsl? @params for d in @descriptions
     @events.emit 'suite:start', name: "Specs"
     @_runNextDescription()
 
@@ -54,6 +76,13 @@ _.extend oojspec, new class OojspecRunner
   describe: (description, block)=>
     @stats.contexts++ # only root descriptions will be count
     @descriptions.push new Description(description, block)
+
+class Notification
+  constructor: (@events, @eventName, @options)->
+
+  run: (_, onFinish)->
+    @events.emit "notification:#{@eventName}", @options
+    onFinish()
 
 RESERVED_FOR_DESCRIPTION_DSL = ['beforeAll', 'before', 'after', 'afterAll', 'describe', 'context',
                                 'example', 'it', 'specify', 'pending', 'xit']

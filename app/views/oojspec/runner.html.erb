@@ -8,18 +8,12 @@
   <%= stylesheet_link_tag "oojspec" %>
   <%= javascript_include_tag "oojspec" %>
   <%= javascript_tag "oojspec.exposeAll()" unless Rails.configuration.sandbox_assets.options[:skip_oojspec_expose] %>
-
-<% @stylesheets.each do |css| -%>
-  <%= stylesheet_link_tag css %>
-<% end -%>
-
-<% @tests.each do |test| -%>
-  <%= javascript_include_tag test %>
-<% end -%>
 </head>
 <body>
-
-  <%= javascript_tag "oojspec.autorun()" %>
+<% @tests.each do |test| -%>
+  <iframe src="<%= sandbox_assets_engine.sandbox_assets_iframe_path test %>"
+          onload="oojspec.onIFrameLoaded(this)" style="display: none"
+          width="100%" height="500px"></iframe> 
+<% end -%>
 </body>
 </html>
-
