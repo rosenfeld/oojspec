@@ -88,7 +88,23 @@ context.
 In contrast `oojspec` will only export `describe`. The other allowed features will be available
 depending on the context. Inside a description `example`, `specify`, `it`, `xit`, `pending` and
 `describe` will be available. Inside an example `expect`, `assert`, `waitsFor` and `runs` will be
-available .
+available.
+
+# Custom events
+
+Oojspec supports custom events as well since v0.1.0 in case you want to notify and
+listen to custom events:
+
+```coffeescript
+oojspec.on 'my-suite-start', (opts)-> console.log 'suite has started', opts
+oojspec.on 'my-suite-end', -> console.log 'suite has ended'
+oojspec.notify 'my-suite-start', option1: 1, option2: 'any'
+oojspec.describe 'some description', -> @example 'it passes', -> @console.log 'suite is running'
+oojspec.notify 'my-suite-end'
+
+# this will log 'suite has started', {option1: 1, option2: 'any'},
+    'suite is running' and finally 'suite has ended'
+```
 
 # CoffeeScript?! Really?!
 
