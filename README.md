@@ -164,6 +164,7 @@ If you want to put your specs directly on `spec/javascripts`, add this to your a
 
 ```ruby
 config.sandbox_assets.template = 'oojspec/runner'
+config.sandbox_assets.iframe_template = 'oojspec/iframe'
 ```
 
 Then you'll be able to run the specs by directly accessing http://localhost:5000.

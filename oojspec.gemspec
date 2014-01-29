@@ -17,5 +17,5 @@ Gem::Specification.new do |s|
   s.files = Dir["{app,lib,vendor}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.md"]
 
   s.add_dependency "coffee-rails"
-  s.add_dependency "rails-sandbox-assets", ">= 0.1.0"
+  s.add_dependency "rails-sandbox-assets", ">= 0.1.1"
 end

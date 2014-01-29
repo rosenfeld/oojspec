@@ -3,7 +3,9 @@ require "rails-sandbox-assets"
 module Oojspec
   class OojspecFilter
     def self.filter(controller)
-      controller.template = 'oojspec/runner' if controller.params[:path].try :start_with?, 'oojspec'
+      return unless controller.params[:path].try :start_with?, 'oojspec'
+      controller.template = 'oojspec/runner'
+      controller.iframe_template = 'oojspec/iframe'
     end
   end
 
