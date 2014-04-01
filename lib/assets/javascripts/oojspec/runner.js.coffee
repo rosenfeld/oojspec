@@ -20,8 +20,8 @@ _.extend oojspec, new class OojspecRunner
     @_iframesLoadedCount = 0
     @_iframeByWindow = {}
     @_iframeWindows = []
-    @on 'iframe-start', (w)=> @_iframeByWindow[w].style.display = ''
-    @on 'iframe-end', (w)=> @_iframeByWindow[w].style.display = 'none'
+    @on 'iframe-start', (w)=> @_iframeByWindow[w.location.pathname].style.display = ''
+    @on 'iframe-end', (w)=> @_iframeByWindow[w.location.pathname].style.display = 'none'
 
   _registerEventHandlers: ->
     @assertions = buster.assertions
@@ -50,7 +50,7 @@ _.extend oojspec, new class OojspecRunner
 
   # for tests in iframe support:
   onIFrameLoaded: (iframe)=>
-    @_iframeByWindow[iframe.contentWindow] = iframe
+    @_iframeByWindow[iframe.contentWindow.location.pathname] = iframe
     @_iframeWindows.push(iframe.contentWindow)
     if ++@_iframesLoadedCount is document.getElementsByTagName('iframe').length
       w.oojspec.run() for w in @_iframeWindows
