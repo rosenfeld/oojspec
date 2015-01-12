@@ -10,3 +10,12 @@
 [submodule "external/busterjs/format"]
 	path = external/busterjs/format
 	url = git://github.com/busterjs/formatio.git
+[submodule "external/lodash"]
+	path = external/lodash
+	url = git@github.com:lodash/lodash.git
+[submodule "external/busterjs/samsam"]
+	path = external/busterjs/samsam
+	url = git@github.com:busterjs/samsam.git
+[submodule "external/busterjs/bane"]
+	path = external/busterjs/bane
+	url = git@github.com:busterjs/bane.git

@@ -24,7 +24,7 @@ _.extend oojspec, new class OojspecRunner
     @on 'iframe-end', (w)=> @_iframeByWindow[w.location.pathname].style.display = 'none'
 
   _registerEventHandlers: ->
-    @assertions = buster.assertions
+    @assertions = referee
     (logFormatter = buster.create buster.format).quoteStrings = false
     @assertions.format = buster.bind logFormatter, "ascii"
     @assertions.on 'pass',    => @stats.assertions++

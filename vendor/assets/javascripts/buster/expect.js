@@ -1,1 +1,1 @@
-../../../../external/busterjs/assertions/lib/buster-assertions/expect.js
+../../../../external/busterjs/assertions/lib/expect.js
