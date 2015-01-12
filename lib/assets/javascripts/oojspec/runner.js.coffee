@@ -25,8 +25,8 @@ _.extend oojspec, new class OojspecRunner
 
   _registerEventHandlers: ->
     @assertions = referee
-    (logFormatter = buster.create buster.format).quoteStrings = false
-    @assertions.format = buster.bind logFormatter, "ascii"
+    logFormatter = formatio.configure quoteStrings: false
+    @assertions.format = -> logFormatter.ascii.apply logFormatter, arguments
     @assertions.on 'pass',    => @stats.assertions++
     @assertions.on 'failure', => @stats.failures++
     #@events.on 'context:start', => @stats.contexts++
