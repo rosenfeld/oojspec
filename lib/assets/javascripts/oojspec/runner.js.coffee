@@ -90,7 +90,7 @@ RESERVED_FOR_EXAMPLE_DSL = ['assert', 'expect', 'fail', 'refute', 'waitsFor', 'r
 class Description
   RESERVED = RESERVED_FOR_DESCRIPTION_DSL.concat RESERVED_FOR_EXAMPLE_DSL
 
-  constructor: (@description, @block)->
+  constructor: (@description, @block, @beforeBlocks = [], @afterBlocks = [])->
     if @description.runSpecs or @description.prototype?.runSpecs
       @block = @description
       @description = @block.description or @block.name
@@ -126,7 +126,7 @@ class Description
 
   removeDsl: -> delete @binding[p] for p in RESERVED_FOR_DESCRIPTION_DSL; return
 
-  run: (@params, @onFinish, @beforeBlocks = [], @afterBlocks = [])->
+  run: (@params, @onFinish)->
     @events.emit 'context:start', name: @description
     if @bindingError
       @events.emit 'test:error', name: @description, error: @bindingError
@@ -134,7 +134,7 @@ class Description
     else
       @doRun()
 
-  doRun: -> @runAround @beforeBlocks, @afterBlocks, @onDescriptionFinished, @processDescriptionBlock
+  doRun: -> @runAround [], [], @onDescriptionFinished, @processDescriptionBlock
 
   onDescriptionFinished: (error)=>
     if error and not error.handled
@@ -154,6 +154,7 @@ class Description
     (@onExamplesFinished(); return) unless @dsl._examples_.length
     nextStep = @dsl._examples_.shift()
     (@reportDeferred(nextStep.description); @runNextStep(); return) if nextStep.pending
+    @prependHooks nextStep
     nextTick =
       if nextStep instanceof Description then =>
         nextStep.run @params, @runNextStep, @dsl._beforeBlocks_, @dsl._afterBlocks_
@@ -169,6 +170,12 @@ class Description
     name += " in #{error.source}" if error.source
     @events.emit 'test:error', { name, error }
     @onFinish(error)
+
+  prependHooks: (nextStep)->
+    @cloneAndPrepend nextStep, type for type in ['beforeBlocks', 'afterBlocks']
+
+  cloneAndPrepend: (nextStep, type)->
+    (nextStep[type] = nextStep[type].slice 0).unshift this[type]...
 
   reportDeferred: (description)-> @events.emit 'test:deferred', name: description
 
