@@ -96,7 +96,7 @@ class Description
       @description = @block.description or @block.name
 
   processDsl: (@params, @binding, @bare)->
-    @events = params.events
+    @events = @params.events
     @dsl = new DescribeDsl
     (@block.runSpecs or @block.prototype?.runSpecs) and @detectBindingError()
 
