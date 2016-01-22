@@ -257,6 +257,10 @@ class ExampleWithHooks extends AroundBlock
   handleResult: ->
     (@events.emit 'test:success', name: @description; return) unless @error
     @error.handled = true
+    stack = if traceErr = @error.lastAsyncTraceError then @filterStack traceErr.stack
+    else @filterStack @error.stack
+    @error.originalStack = @error.stack if @error.stack
+    @error.stack = stack if stack
     if @error.name is 'AssertionError'
       @events.emit 'test:failure', name: @description, error: @error
       return
@@ -268,6 +272,16 @@ class ExampleWithHooks extends AroundBlock
     @error.name = 'Exception'
     @error.name += " in #{@error.source}" if @error.source
     @events.emit 'test:error', name: @description, error: @error
+
+  filterStack: (stack) ->
+    return unless stack
+    filteredStack = []
+    for l in stack.split("\n")
+      continue if /at ExampleDsl\.(runs|waitsFor)/.test l
+      continue if /at Object\.(referee|assert)/.test l
+      break if /Example\.tryBlock/.test l
+      filteredStack.push l
+    filteredStack.join "\n"
 
 class ExampleGroupWithoutHooks
   constructor: (@params, @binding, @bare, @blocks, @onFinish, @onError)->
@@ -314,7 +328,7 @@ class Example
 
   runNextAsyncStep: ->
     (@finish(); return) unless @steps.length
-    step = @steps.shift()
+    [step, @lastAsyncTraceError] = @steps.shift()
     if typeof step is 'function'
       @tryBlock step, @runNextAsyncStep
     else
@@ -330,7 +344,8 @@ class Example
       (@finish {timeout: true, @description}; return) if new Date().getTime() > @deadline
       setTimeout @keepTryingCondition, TICK
 
-  finish: ->
+  finish: (error) ->
+    error.lastAsyncTraceError = @lastAsyncTraceError if error and @lastAsyncTraceError
     if @binding and not @bare
       (@binding[m] = b if b = @describeDsl[m]) for m in RESERVED_FOR_DESCRIPTION_DSL
       delete @binding[m] for m in RESERVED_FOR_EXAMPLE_DSL
@@ -339,14 +354,15 @@ class Example
 class ExampleDsl
   constructor: (@assert, @expect, @fail, @refute)-> @_asyncQueue_ = []
 
-  runs: (step)=> @_asyncQueue_.push step
+  runs: (step)=>
+    @_asyncQueue_.push [step, new Error('trace')]
 
   waitsFor: =>
     for a in arguments
       (condition = a; continue)   if typeof a is "function"
       (timeout = a; continue)     if typeof a is "number"
       (description = a; continue) if typeof a is "string"
-    @_asyncQueue_.push [condition, timeout, description]
+    @_asyncQueue_.push [[condition, timeout, description], new Error('trace')]
 
 class StepContext
   constructor: (@assert, @expect, @fail)->
