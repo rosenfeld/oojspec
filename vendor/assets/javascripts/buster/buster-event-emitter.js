@@ -1,1 +1,1 @@
-../../../../external/busterjs/core/lib/buster-event-emitter.js
+../../../../node_modules/buster-core/lib/buster-event-emitter.js

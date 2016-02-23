@@ -1,1 +1,1 @@
-../../../../external/busterjs/bane/lib/bane.js
+../../../../node_modules/bane/lib/bane.js

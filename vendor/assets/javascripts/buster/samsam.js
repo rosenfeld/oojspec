@@ -1,1 +1,1 @@
-../../../../external/busterjs/samsam/lib/samsam.js
+../../../../node_modules/samsam/lib/samsam.js

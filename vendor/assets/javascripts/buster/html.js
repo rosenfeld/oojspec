@@ -1,1 +1,1 @@
-../../../../external/busterjs/reports/lib/buster-test/reporters/html.js
+../../../../node_modules/buster-test/lib/reporters/html.js

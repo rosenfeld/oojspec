@@ -1,1 +1,1 @@
-../../../../external/busterjs/reports/lib/buster-test/stack-filter.js
+../../../../node_modules/stack-filter/lib/stack-filter.js

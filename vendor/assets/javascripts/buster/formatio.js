@@ -1,1 +1,1 @@
-../../../../external/busterjs/format/lib/formatio.js
+../../../../node_modules/formatio/lib/formatio.js
