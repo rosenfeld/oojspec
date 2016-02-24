@@ -1,6 +1,16 @@
 # =require buster/all
 # =require ./utils
 
+buster.reporters.html.listen = (runner) ->
+  runner.bind this, {
+    "context:start": "context:start", "context:end": "context:end",
+    "test:success": "test:success", "test:failure": "test:failure",
+    "test:error": "test:error", "test:timeout": "test:timeout",
+    "test:deferred": "test:deferred", "suite:end": "suite:end"
+  }
+  runner.console.bind(this, "log") if runner.console
+  return this
+
 _ = oojspec._
 
 _.extend oojspec, new class OojspecRunner
