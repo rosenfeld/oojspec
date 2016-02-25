@@ -6,19 +6,31 @@
     "type": "git",
     "url": "git@github.com:rosenfeld/oojspec.git"
   },
+  "main": "lib/oojspec.js",
+  "files": [
+    "lib/oojspec.js",
+    "lib/oojspec-iframe-runner.js"
+  ],
   "keywords": [
-    "oojspec"
+    "oojspec",
+    "test",
+    "buster"
   ],
   "author": "Rodrigo Rosenfeld Rosas <rr.rosas@gmail.com>",
   "devDependencies": {
     "bane": "^1.1.2",
     "buster-core": "^0.6.4",
     "buster-test": "^0.7.14",
+    "css-loader": "^0.23.1",
     "formatio": "^1.2.0",
+    "imports-loader": "^0.6.5",
     "lodash": "^2.4.2",
     "referee": "^1.2.0",
     "samsam": "^1.2.1",
-    "stack-filter": "1.0.1"
+    "script-loader": "^0.6.1",
+    "stack-filter": "1.0.1",
+    "style-loader": "^0.13.0",
+    "webpack": "^1.12.14"
   },
   "license": "MIT",
   "contributors": []
