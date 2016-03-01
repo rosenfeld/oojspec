@@ -1,5 +1,9 @@
-# =require buster/all
-# =require ./utils
+require './utils.js.coffee'
+
+buster = require 'buster-core'
+window.buster = buster # this is expected by the HTML reporter
+require 'buster-core/lib/buster-event-emitter.js'
+require 'buster-test/lib/reporters/html.js'
 
 buster.reporters.html.listen = (runner) ->
   runner.bind this, {
@@ -34,8 +38,8 @@ _.extend oojspec, new class OojspecRunner
     @on 'iframe-end', (w)=> @_iframeByWindow[w.location.pathname].style.display = 'none'
 
   _registerEventHandlers: ->
-    @assertions = referee
-    logFormatter = formatio.configure quoteStrings: false
+    @assertions = require('referee')
+    logFormatter = require('formatio').configure quoteStrings: false
     @assertions.format = -> logFormatter.ascii.apply logFormatter, arguments
     @assertions.on 'pass',    => @stats.assertions++
     @assertions.on 'failure', => @stats.failures++
