@@ -1,0 +1,7 @@
+/app
+/lib
+/pkg
+/oojspec.gemspec
+/Gemfile*
+/script
+/webpack.config.js
