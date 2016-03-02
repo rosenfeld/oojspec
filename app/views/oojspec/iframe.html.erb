@@ -5,7 +5,7 @@
 
   <title>OOJSpec Test Runner</title>
 
-  <%= javascript_include_tag "oojspec/iframe-runner" %>
+  <%= javascript_include_tag sandbox_assets_engine.oojspec_static_path + '/oojspec/iframe-runner.js' %>
   <%= javascript_tag "oojspec.exposeAll()" unless Rails.configuration.sandbox_assets.options[:skip_oojspec_expose] %>
 
   <% @stylesheets.each do |css| -%>

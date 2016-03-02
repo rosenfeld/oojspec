@@ -6,5 +6,6 @@
 (_ = @oojspec._).extend = (extended, extender)->
   extended[p] = v for p, v of extender when p[0] isnt '_'
 
+require 'buster-test/resources/buster-test.css'
 require './oojspec/runner.js.coffee'
 require './oojspec/progress.js.coffee'

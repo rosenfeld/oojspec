@@ -14,8 +14,7 @@ Gem::Specification.new do |s|
   s.description = %q{ A test runner similar to RSpec for client-side code built
     on top of Buster.js that is more suited for integration tests.}
 
-  s.files = Dir["{app,lib,vendor}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.md"]
+  s.files = Dir["{app,lib,vendor,dist}/**/*"] + ["MIT-LICENSE", "README.md"]
 
-  s.add_dependency "coffee-rails"
   s.add_dependency "rails-sandbox-assets", ">= 0.1.2"
 end

@@ -1,4 +1,4 @@
-# =require ./runner
+require './progress.css'
 
 new class ProgressStats
   constructor: (@eh = oojspec.events)->
