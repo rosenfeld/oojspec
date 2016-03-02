@@ -4,16 +4,11 @@
   "description": "Object-oriented client-side (JavaScript or CoffeeScript) testing",
   "repository": {
     "type": "git",
-    "url": "git@github.com:rosenfeld/oojspec.git"
+    "url": "https://github.com/rosenfeld/oojspec.git"
   },
-  "main": "lib/assets/javascripts/oojspec.js",
-  "files": [
-    "lib/assets/javascripts/oojspec.js",
-    "lib/assets/javascripts/oojspec-iframe-runner.js"
-  ],
-  "keywords": [
-    "oojspec"
-  ],
+  "main": "dist/oojspec.js",
+  "files": [ "dist", "src" ],
+  "keywords": [ "oojspec", "test", "specs" ],
   "author": "Rodrigo Rosenfeld Rosas <rr.rosas@gmail.com>",
   "devDependencies": {
     "buster-core": "0.6.4",
@@ -35,5 +30,8 @@
   "license": "MIT",
   "contributors": [
     "Frederico Schardong <frede.sch@gmail.com>"
-  ]
+  ],
+  "scripts": {
+    "prepublish": "rm -rf dist && node_modules/.bin/webpack"
+  }
 }

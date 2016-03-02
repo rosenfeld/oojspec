@@ -11,6 +11,5 @@ Rake::Task[:build].enhance [:compile]
 
 desc 'Compile oojspec static files'
 task :compile do
-  system 'rm -rf dist && npm install && node_modules/.bin/webpack' or
-    abort('could not compile oojspec')
+  system 'npm install' or abort('could not compile oojspec')
 end
