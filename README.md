@@ -1,8 +1,10 @@
 # oojspec - Object-oriented client-side testing
 
 `oojspec` is a test runner built on top of [Buster.js](http://busterjs.org/), focused on
-integration tests. It is also a Rails engine, although you can use it in non-Rails
-applications - more on that in a later topic.
+integration tests. It is available both as a Rails engine and as an NPM package. Even though
+I'd recommend to use the NPM package with the Karma runner for non-Rails projects (or even for
+Rails projects it may be a better option) the Rails engine can also be used by non-Rails projects
+- more on that in a later topic.
 
 It uses the same assertions and reporter and you can choose between expectations
 and assertions style on your examples or even mix them up.
@@ -55,7 +57,13 @@ It should be, but its API is certainly going to change a lot before it becomes s
 So I wouldn't advise you to write tons of tests with `oojspec` because you might have to rewrite
 them in the future when the API changes.
 
-On the other side, I'll be using it myself in my own projects, replacing my Jasmine specs.
+On the other side, I use it myself in my own projects and the API hasn't change for a few years
+now.
+
+It still misses the feature of running an specific test, but since the tests could rely on
+previous tests, I need to think in some way to specify the interdependencies of the tests before
+I could implement some test filter to run a single test and its dependencies. It's not easy to
+find time to work on this though with two little girls at home.
 
 # Where are its tests?
 
@@ -112,6 +120,9 @@ JavaScript?! Really?!
 
 This is me who is writing this runner and I dislike JavaScript, so please keep your preferences
 for you. I won't change to pure JavaScript. Period.
+
+But this project won't force your application to depend on CoffeeScript either. It uses webpack
+to generate the final JS which is packaged both in the Rails engine gem and in the NPM package.
 
 # Can I test my JavaScript code with oojspec despite it being written in CS?
 
@@ -178,7 +189,14 @@ config.sandbox_assets.options[:skip_oojspec_expose] = true
 
 # What about non-Rails applications?
 
-There are two ways you can use oojspec with non-Rails applications.
+There are a few ways you can use oojspec with non-Rails applications.
+
+## Integrate the NPM package with the Karma runner
+
+This is what I recommend most. There's some in-progress work to integrate oojspec and Karma
+and I'll describe the details here soon.
+
+## Using the Rails engine
 
 If you want to take advantage of the Rails asset pipeline,
 [here](https://github.com/rosenfeld/jasmine_assets_enabler/tree/oojs)
@@ -189,9 +207,11 @@ It is target to the `oojs` gem that is currently built on top of `rails_sandbox_
 is going to change and `oojs` will be built on top of `oojspec` in the future. But you can currently
 just add both gems right now and ignore the Jasmine runner while I don't change `oojs`.
 
-The other approach is to compile the source (possibly in the
-[Try CoffeeScript page](http://coffeescript.org/)) and write your own custom runner HTML. Just take
-the template provided by this gem as an example on how to write it.
+## Do it yourself approach
+
+You can also clone this project and run webpack to compile the source. Then you can write your
+own custom runner HTML. Just take the template provided by this gem as an example on how to
+write it.
 
 Alternatively you can take a look at the jsfiddle demos from the Examples section.
 
@@ -203,7 +223,7 @@ features in my spare time.
 I'd like to support `given-and-when-and-then-and` style specs at some point.
 
 But I wanted to have some initial working version published soon before someone register an
-`oojspec` gem before me! :)
+`oojspec` gem or NPM package before me! :)
 
 # Contributing
 
@@ -211,7 +231,3 @@ I'd love to hear your opinions on the API and design of `oojspec` and of course 
 will be very welcome if they're aligned with this project goals.
 
 Enjoy! :)
-
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/rosenfeld/oojspec/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
